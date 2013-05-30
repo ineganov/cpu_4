@@ -1,0 +1,14 @@
+03 03 34 1E 00 // Device reset
+03 03 34 12 00 // Device inactivate
+03 03 34 08 12 // DAC Enable
+03 03 34 0A 00 // Mute disable
+03 03 34 0C 00 // Powerup
+03 03 34 0E 09 // Set interface
+03 03 34 10 20 // Set clock
+03 03 34 12 01 // Device activate
+00 00 
+
+//padding:
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00

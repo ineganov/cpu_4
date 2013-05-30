@@ -1,0 +1,21 @@
+SLD_AUTO_INSTANCE_INDEX=NO
+SLD_INSTANCE_INDEX=0
+SLD_IR_WIDTH=2
+SLD_SIM_ACTION=
+SLD_SIM_N_SCAN=0
+SLD_SIM_TOTAL_LENGTH=0
+DEVICE_FAMILY="Cyclone IV E"
+CBX_AUTO_BLACKBOX=ALL
+ir_out
+tdo
+ir_in
+tck
+tdi
+virtual_state_cdr
+virtual_state_cir
+virtual_state_e1dr
+virtual_state_e2dr
+virtual_state_pdr
+virtual_state_sdr
+virtual_state_udr
+virtual_state_uir
