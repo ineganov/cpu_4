@@ -1,0 +1,23 @@
+                      GPIO 0                   GPIO 1
+                       __ __                    __ __
+                  SDA-|40|39|-SCL              | 1| 2|
+                      |  |  |                  |  |  |
+                      |  |  |                  |  |  |
+             ENGINE 2-|  |  |                  |  |  |-ENGINE 3
+             ENGINE 1-|  |  |                  |  |  |-ENGINE 4
+                  GND-| G|3V|                  |5V| G|-GND
+               HP_CLK-|  |  |                  |  |  |
+               HP_DO -|  |  |                  |  |  |
+               HP_CE -|  |  |                  |  |  |-RADIO CH6
+               HP_RS -|  |  |                  |  |  |-RADIO CH5
+               HP_BL -|  |  |                  |  |  |-RADIO CH4
+               HP_SEL-|  |  |                  |  |  |-RADIO CH3
+               HP_RST-|  |  |                  |  |  |-RADIO CH2
+               HP_OSC-|  |  |                  |  |  |-RADIO CH1
+                      | G|5V|                  |3V| G|
+                      |  |  |                  |  |  |-UART RX
+                      |  |  |                  |  |  |-UART TX
+                      |  |  |                  |  |  |
+                      |  |  |                  |  |  |
+                      | 2| 1|                  |39|40|
+                       ^^ ^^   USB SIDE         ^^ ^^
