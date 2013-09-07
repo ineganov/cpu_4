@@ -30,13 +30,25 @@ assign HZRD.ALU_FWD_B =
 
 
 
-logic LW_STALL, LOAD_AT_E;
+logic lw_stall, mdiv_stall, load_at_e, mfcop_at_e, mfhl_at_m;
 
-assign LOAD_AT_E  = HZRD.ALUORMEM_E  & (( HZRD.RS_D == HZRD.RT_E ) | 
+assign load_at_e  = HZRD.ALUORMEM_E  & (( HZRD.RS_D == HZRD.RT_E ) | 
                                         ( HZRD.RT_D == HZRD.RT_E ));
 
-assign LW_STALL = LOAD_AT_E;
+assign mfcop_at_e = ^HZRD.MFCOP_SEL_E & (( HZRD.RS_D == HZRD.RD_E ) | 
+                                         ( HZRD.RT_D == HZRD.RD_E ));
 
-assign HZRD.STALL = LW_STALL;
+assign lw_stall = load_at_e | mfcop_at_e;
+
+
+// The following is a premature optimisation.
+// Should read: mfcop_sel_m == 2'b01 || mfcop_sel_m == 2'b10
+assign mfhl_at_m  = HZRD.MFCOP_SEL_M[1] ^ HZRD.MFCOP_SEL_M[0];
+assign mdiv_stall = HZRD.MDIV_BUSY_M & mfhl_at_m;
+
+assign HZRD.STALL_FD = lw_stall | mdiv_stall;
+assign HZRD.STALL_EM = mdiv_stall;
+assign HZRD.RESET_E = lw_stall;
+assign HZRD.RESET_W = mdiv_stall;
 
 endmodule

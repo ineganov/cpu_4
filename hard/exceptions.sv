@@ -9,20 +9,20 @@ logic   [7:0] e_vec;
 logic   [4:0] cause;
 logic         e_enter;
 
-assign e_enter = RESET            | 
-                 EXC.SYSCALL      |
-                 EXC.BREAK        |
-                 EXC.RI           |     
-                 EXC.CpU          |
-                 EXC.OV           |   
-                 EXC.IBE          |
-                 EXC.DBE          |
-                 EXC.INT_COUNTER ;    
+assign e_enter = RESET         | 
+                 EXC.SYSCALL   |
+                 EXC.BREAK     |
+                 EXC.RI        |     
+                 EXC.CpU       |
+                 EXC.OV        |   
+                 EXC.IBE       |
+                 EXC.DBE       |
+                 EXC.INTERRUPT ;    
 
 
 //Exceptions are in the order of significance
 assign e_vec = {EXC.IBE, EXC.RI, EXC.CpU, EXC.BREAK, EXC.SYSCALL, 
-                EXC.OV, EXC.DBE, EXC.INT_COUNTER};
+                EXC.OV, EXC.DBE, EXC.INTERRUPT};
 
 always_comb
   casex(e_vec)
@@ -33,7 +33,7 @@ always_comb
   8'b00001XXX: cause = 5'd08; //SYSCALL
   8'b000001XX: cause = 5'd12; //Overflow
   8'b0000001X: cause = 5'd07; //DBE
-  8'b00000001: cause = 5'd00; //Counter interrupt
+  8'b00000001: cause = 5'd00; //Counter or external interrupt
   default:     cause = 5'd31; //default
   endcase
 

@@ -1,9 +1,9 @@
 module mcpu(  input        CLK,
               input        RESET,
-              if_io.io     IO);
+              if_io        IO);
               
 
-parameter RAM_DEPTH = 14; //num_words = 2^D; bytes = 2^(D+2)
+parameter RAM_DEPTH = 8; //num_words = 2^D; bytes = 2^(D+2)
             
 logic jtag_reset, any_reset;
 assign any_reset = jtag_reset | RESET;
@@ -46,6 +46,7 @@ coprocessor0 #(RAM_DEPTH) cp0  ( .CLK      ( CLK            ),
                                  .RESET    ( any_reset      ),
                                  .CP0      ( if_cp0         ),
                                  .EXC      ( if_except      ),
+                                 .IO       ( IO             ),
                                  .DEBUG    ( if_debug       ));
 
 
@@ -57,6 +58,7 @@ exceptions            excp_unit( .CLK      ( CLK            ),
 
 phy_mem #(RAM_DEPTH) phy_mem(CLK, any_reset, if_memory, IO);
 
-jtag_stub        jtag(CLK, RESET, jtag_reset, if_debug );
+//jtag        jtag(CLK, RESET, jtag_reset, if_debug );
+jtag_stub  jtag(CLK, RESET, jtag_reset, if_debug );
           
 endmodule

@@ -1,21 +1,6 @@
 //===========================================================================//
 //                                                                           //
 //===========================================================================//
-/*
-interface if_clock( input CPU);
-   logic CPU;
-   logic MEM;
-   logic RUN;
-   logic RESET;
-
-
-modport in ()
-
-
-endinterface */
-//===========================================================================//
-//                                                                           //
-//===========================================================================//
 interface if_except;
 
   logic        ERET;
@@ -26,7 +11,7 @@ interface if_except;
   logic        OV;  
   logic        IBE;
   logic        DBE;    
-  logic        INT_COUNTER;
+  logic        INTERRUPT;
 
   logic [31:0] PC_WB;
   logic        DELAY_SLOT;
@@ -45,10 +30,10 @@ modport dpath ( input  E_USE_VEC, RESET, VECTOR,
                        IBE, DBE, BAD_VA, PC_WB, DELAY_SLOT );
 
 modport cp0   ( input  E_ENTER, DELAY_SLOT, CAUSE, EPC, BAD_VA, ERET,
-                output INT_COUNTER, EPC_Q );
+                output INTERRUPT, EPC_Q );
 
 modport excp  ( input  ERET, EPC_Q,
-                       INT_COUNTER, SYSCALL, BREAK, RI,
+                       INTERRUPT, SYSCALL, BREAK, RI,
                        CpU, OV, IBE, DBE, PC_WB, DELAY_SLOT,
                 output E_ENTER, E_USE_VEC, RESET, VECTOR, EPC,  CAUSE );
 
@@ -65,32 +50,38 @@ interface if_hazard;
 
   logic [4:0] RS_E;
   logic [4:0] RT_E;
+  logic [4:0] RD_E;
   logic [4:0] REGDST_E;
+  logic [1:0] MFCOP_SEL_E;
   logic       WRITEREG_E;
   logic       ALUORMEM_E;
 
   logic [4:0] REGDST_M;
+  logic [1:0] MFCOP_SEL_M;
   logic       ALUORMEM_M;
   logic       WRITEREG_M;
+  logic       MDIV_BUSY_M;
 
   logic [4:0] REGDST_W;
   logic       WRITEREG_W; 
 
-  logic       STALL;
+  logic       STALL_FD, STALL_EM, RESET_E, RESET_W;
   logic [1:0] ALU_FWD_A;
   logic [1:0] ALU_FWD_B;
 
 
-modport dpath ( input  STALL, ALU_FWD_A, ALU_FWD_B,
-                output RS_D, RT_D, RS_E, RT_E, REGDST_E,
-                       WRITEREG_E, ALUORMEM_E, REGDST_M, ALUORMEM_M,
-                       WRITEREG_M, REGDST_W, WRITEREG_W );
+modport dpath ( input  STALL_FD, STALL_EM, RESET_E, RESET_W, ALU_FWD_A, ALU_FWD_B,
+                output RS_D, RT_D, RS_E, RT_E, RD_E, REGDST_E,
+                       WRITEREG_E, ALUORMEM_E, MFCOP_SEL_E, MFCOP_SEL_M,
+                       REGDST_M, ALUORMEM_M, WRITEREG_M, REGDST_W, WRITEREG_W, 
+                       MDIV_BUSY_M );
 
 
-modport hzrd ( output  STALL, ALU_FWD_A, ALU_FWD_B,
-                input  RS_D, RT_D, RS_E, RT_E, REGDST_E,
-                       WRITEREG_E, ALUORMEM_E, REGDST_M, ALUORMEM_M,
-                       WRITEREG_M, REGDST_W, WRITEREG_W );
+modport hzrd ( output  STALL_FD, STALL_EM, RESET_E, RESET_W, ALU_FWD_A, ALU_FWD_B,
+                input  RS_D, RT_D, RS_E, RT_E, RD_E, REGDST_E, 
+                       WRITEREG_E, ALUORMEM_E, MFCOP_SEL_E, MFCOP_SEL_M, 
+                       REGDST_M, ALUORMEM_M, WRITEREG_M, REGDST_W, WRITEREG_W, 
+                       MDIV_BUSY_M );
 
 endinterface
 //===========================================================================//
@@ -198,11 +189,17 @@ endinterface
 //===========================================================================//
 interface if_io;
 
-logic [7:0] LEDS_WD;
-logic       LEDS_WE;
+logic [31:0] LEDS_WD, LEDS_RD;
+logic  [3:0] LEDS_A;
+logic        LEDS_WE, INT_BTN;
 
-modport io    (output LEDS_WE, LEDS_WD);
-modport leds  (input LEDS_WE, LEDS_WD);
+modport io    (output LEDS_WE, LEDS_WD, LEDS_A,
+               input  LEDS_RD); 
+
+modport cp0   (input  INT_BTN);
+
+modport leds  (input  LEDS_WE, LEDS_WD, LEDS_A,
+               output LEDS_RD, INT_BTN );
 
 endinterface
 //===========================================================================//

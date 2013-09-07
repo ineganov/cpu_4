@@ -39,9 +39,9 @@ logic [31:0] branch_target_e, jump_target_e, jb_target_e, br_target_e, return_ta
 logic [25:0] inst_e;
 logic  [4:0] reg_dst_addr_e, rs_e, rt_e, rd_e, shamt_e, alu_op_e;
 logic  [3:0] dmem_be_e;
-logic  [2:0] br_type_e;
+logic  [2:0] br_type_e, hilo_op_e;
 logic  [1:0] reg_dst_e, mfcop_sel_e, mem_optype_e;
-logic        write_reg_e, write_mem_e, aluormem_e, multiply_e, madd_e,
+logic        write_reg_e, write_mem_e, aluormem_e, wr_hilo_e,
              link_e, mem_partial_e, alu_a_sel_e, alu_b_sel_e,
              write_cp0_e, ien_e, jump_e, br_inst_e, br_take_e, jump_r_e;
 
@@ -51,9 +51,10 @@ logic        e_OV_e, e_SYSCALL_e, e_BREAK_e, e_RI_e, e_CpU_e, e_IBE_e, eret_e;
 //MEMORY: 
 logic [31:0] mem_reordered_m, aluout_m, pc_m, src_b_m, BAD_VA_m, hi_m, lo_m, aluout_mux_m;
 logic  [4:0] reg_dst_addr_m, rd_m;
+logic  [2:0] hilo_op_m;
 logic  [1:0] mem_optype_m, mfcop_sel_m;
 logic        br_inst_m, write_reg_m, write_mem_m, aluormem_m, mem_partial_m,
-             ien_m, multiply_m, madd_m, signed_op_m, write_cp0_m;
+             ien_m, write_cp0_m, mdiv_busy_m, wr_hilo_m;
 logic        e_OV_m, e_SYSCALL_m, e_BREAK_m, e_RI_m, e_CpU_m, e_IBE_m, 
              eret_m, mem_inhibit_m;
 
@@ -68,7 +69,7 @@ logic        e_OV_w, e_SYSCALL_w, e_BREAK_w, e_RI_w, e_CpU_w, e_IBE_w, e_DBE_w;
 //------------------------FETCH STAGE----------------------------------------//
 assign pc_plus_4_f = pc_f + 32'd4;
 
-wire [1:0] next_pc_select =  HZRD.STALL    ? 2'b11 :
+wire [1:0] next_pc_select =  HZRD.STALL_FD ? 2'b11 :
                              EXC.E_USE_VEC ? 2'b10 : 
                              br_take_e     ? 2'b01 :
                                              2'b00 ;
@@ -89,7 +90,7 @@ assign MEM.iADDR = next_pc[31:2];
 
 assign ien_f = ~br_take_e;
 
-mux2 stll_mux(HZRD.STALL, MEM.iDATA, inst_d, inst_stll_f);
+mux2 stll_mux(HZRD.STALL_FD, MEM.iDATA, inst_d, inst_stll_f);
 mux2 subs_mux(DEBUG.INST_SUBST, inst_stll_f, DEBUG.iDATA, inst_subs_f);
 mux2 null_mux(enable_inst_f, 32'h00000000, inst_subs_f, inst_f );
 
@@ -98,7 +99,7 @@ assign enable_inst_f = DEBUG.INST_SUBST ? DEBUG.RUN : (ien_f & ~MEM.IBE);
 assign rs_f = inst_f[25:21];
 assign rt_f = inst_f[20:16];
 
-ffd #(66) pipe_reg_D(CLK, EXC.RESET, ~HZRD.STALL, 
+ffd #(66) pipe_reg_D(CLK, EXC.RESET, ~HZRD.STALL_FD, 
                               { ien_f,        // 1/
                                 inst_f,       //32/
                                 MEM.IBE,      // 1/
@@ -143,7 +144,7 @@ assign write_cp0_d = CI.WRITE_CP0 & ~CP_UNUSBL;
 assign pc_plus_4_d = pc_d + 3'd4;
 
 
-ffd #(249) pipe_reg_E(CLK, EXC.RESET | HZRD.STALL, 1'b1,
+ffd #(251) pipe_reg_E(CLK, EXC.RESET | HZRD.RESET_E, ~HZRD.STALL_EM,
                   {  ien_d,             // 1/ instruction enable
                      write_cp0_d,       // 1/ write coprocessor0
                      CI.WRITE_REG,      // 1/ write to register file
@@ -151,8 +152,8 @@ ffd #(249) pipe_reg_E(CLK, EXC.RESET | HZRD.STALL, 1'b1,
                      CI.MEM_PARTIAL,    // 1/ memory byte- or halfword access
                      CI.MEM_OPTYPE,     // 2/ mem op: 00-ubyte, 01-uhalf, 10-sb, 11-sh
                      CI.ALUORMEM_WR,    // 1/ write regfile from alu or from memory
-                     CI.MULTIPLY,       // 1/ do multiplication and write hi&lo
-                     CI.MADD,           // 1/ do multiply and add
+                     CI.WRITE_HILO,     // 1/ write hilo registers
+                     CI.HILO_OP,        // 3/ hilo operation
                      CI.BRANCH_TYPE,    // 3/ branch type
                      CI.JUMP_R,         // 1/ jr-type jump
                      CI.ALU_OP,         // 5/ ALU Operation select
@@ -181,8 +182,8 @@ ffd #(249) pipe_reg_E(CLK, EXC.RESET | HZRD.STALL, 1'b1,
                      mem_partial_e,     // 1/ memory byte- or halfword access
                      mem_optype_e,      // 2/ mem op: 00-ubyte, 01-uhalf, 10-sb, 11-sh
                      aluormem_e,        // 1/ write regfile from alu or from memory
-                     multiply_e,        // 1/ do multiplication and write hi&lo
-                     madd_e,            // 1/ do multiply and add
+                     wr_hilo_e,         // 1/ write hilo registers
+                     hilo_op_e,         // 3/ hilo operation
                      br_type_e,         // 3/ branch type
                      jump_r_e,          // 1/ jr-type jump
                      alu_op_e,          // 8/ ALU Operation select
@@ -210,9 +211,11 @@ ffd #(249) pipe_reg_E(CLK, EXC.RESET | HZRD.STALL, 1'b1,
 //-----------IO BLOCK-----------//
 assign HZRD.RS_E = rs_e;
 assign HZRD.RT_E = rt_e;
-assign HZRD.REGDST_E = reg_dst_addr_e;
-assign HZRD.WRITEREG_E = write_reg_e;
-assign HZRD.ALUORMEM_E = aluormem_e;
+assign HZRD.RD_E = rd_e;
+assign HZRD.REGDST_E    = reg_dst_addr_e;
+assign HZRD.WRITEREG_E  = write_reg_e;
+assign HZRD.ALUORMEM_E  = aluormem_e;
+assign HZRD.MFCOP_SEL_E = mfcop_sel_e;
 
 assign MEM.WE    = write_mem_e;
 assign MEM.RE    = aluormem_e;
@@ -293,14 +296,14 @@ store_reorder st_reorder_unit( .LO_ADDR ( aluout_e[1:0] ),
                                .BYTE_EN ( dmem_be_e     ),
                                .DATA_OUT( dmem_wd_e     ));
 
-ffd #(127) pipe_reg_M ( CLK, EXC.RESET, 1'b1,
+ffd #(129) pipe_reg_M ( CLK, EXC.RESET, ~HZRD.STALL_EM,
                   {  ien_e,             // 1/ instruction enable
                      br_inst_e,         // 1/ branch instruction
                      write_reg_e,       // 1/ write to register file
                      write_mem_e,       // 1/ write data memory
                      write_cp0_e,       // 1/ write coprocessor0
-                     multiply_e,        // 1/ multiplication request
-                     madd_e,            // 1/ multiply-add request
+                     wr_hilo_e,         // 1/ write hilo registers
+                     hilo_op_e,         // 3/ hilo operation
                      aluormem_e,        // 1/ write regfile from alu or from memory
                      mem_optype_e,      // 2/ mem op: 00-ubyte, 01-uhalf, 10-sb, 11-sh
                      mem_partial_e,     // 1/ memory byte- or halfword access
@@ -325,8 +328,8 @@ ffd #(127) pipe_reg_M ( CLK, EXC.RESET, 1'b1,
                      write_reg_m,
                      write_mem_m,
                      write_cp0_m,       // 1/ write coprocessor0
-                     multiply_m,
-                     madd_m,
+                     wr_hilo_m,         // 1/ write hilo registers
+                     hilo_op_m,         // 3/ hilo operation
                      aluormem_m,
                      mem_optype_m,      // 2/ mem op: 00-ubyte, 01-uhalf, 10-sb, 11-sh
                      mem_partial_m,     // 1/ memory byte- or halfword access
@@ -348,9 +351,11 @@ ffd #(127) pipe_reg_M ( CLK, EXC.RESET, 1'b1,
 
 //------------------------MEMORY STAGE---------------------------------------//
 //-----------IO BLOCK-----------//
-assign HZRD.REGDST_M   = reg_dst_addr_m;
-assign HZRD.ALUORMEM_M = aluormem_m;
-assign HZRD.WRITEREG_M = write_reg_m;
+assign HZRD.REGDST_M    = reg_dst_addr_m;
+assign HZRD.ALUORMEM_M  = aluormem_m;
+assign HZRD.WRITEREG_M  = write_reg_m;
+assign HZRD.MFCOP_SEL_M = mfcop_sel_m;
+assign HZRD.MDIV_BUSY_M = mdiv_busy_m;
 
 assign CP0.IDX     = rd_m;
 assign CP0.WD      = src_b_m;
@@ -364,9 +369,10 @@ assign BAD_VA_m = pc_m; ///dtlb_exception ? aluout_m1 : pc_m1;
 // this trigger inhibit memory writes (state changes!) between
 // the exceptional event and its handling. During this period,
 // instructions could write to memory, which is not desired.
-rsd mem_wr_inhibit_fd(CLK, { eret_m | e_OV_m | e_IBE_m | e_SYSCALL_m |
-                             e_BREAK_m | e_RI_m | e_CpU_m | MEM.DBEa }, 
-                           EXC.RESET, mem_inhibit_m );
+rsd mem_wr_inhibit_fd(CLK, EXC.RESET,
+                            { eret_m    | e_OV_m | e_IBE_m | e_SYSCALL_m |
+                              e_BREAK_m | e_RI_m | e_CpU_m | MEM.DBEa    }, 
+                            mem_inhibit_m );
 
 load_reorder ld_reorder_unit( .LO_ADDR ( aluout_m[1:0]   ),
                               .DATA_IN ( MEM.dDATA       ),
@@ -374,14 +380,15 @@ load_reorder ld_reorder_unit( .LO_ADDR ( aluout_m[1:0]   ),
                               .OP_TYPE ( mem_optype_m    ),
                               .DATA_OUT( mem_reordered_m )); 
 
-muldiv  muldiv_unit ( .CLK  ( CLK         ),
-                      .MUL  ( multiply_m  ),
-                      .MAD  ( madd_m      ),
-                      .SIGN ( signed_op_m ),
-                      .A    ( aluout_m    ),
-                      .B    ( src_b_m     ),
-                      .HI   ( hi_m        ),
-                      .LO   ( lo_m        ));
+muldiv  muldiv_unit ( .CLK   ( CLK         ),
+                      .RESET ( EXC.RESET   ),
+                      .EN    ( wr_hilo_m   ),
+                      .OP    ( hilo_op_m   ),
+                      .A     ( aluout_m    ),
+                      .B     ( src_b_m     ),
+                      .HI    ( hi_m        ),
+                      .LO    ( lo_m        ),
+                      .BUSY  ( mdiv_busy_m ) );
 
 mux4 aluout_mux(  mfcop_sel_m,
                   aluout_m,
@@ -390,7 +397,7 @@ mux4 aluout_mux(  mfcop_sel_m,
                   CP0.RD,         //MFC0
                   aluout_mux_m ); 
 
-ffd #(145) pipe_reg_W(CLK, EXC.RESET, 1'b1,
+ffd #(145) pipe_reg_W(CLK, EXC.RESET | HZRD.RESET_W, 1'b1,
                   {  ien_m,
                      write_reg_m,        // 1/ write to register file
                      aluormem_m,         // 1/ write regfile from alu or from memory

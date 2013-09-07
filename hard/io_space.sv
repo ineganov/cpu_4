@@ -20,9 +20,22 @@ ffd #(RAM_DEPTH) addr_fd(CLK, RESET, 1'b1, IO_ADDR, addr_q);
 ffd #(32)        data_fd(CLK, RESET, 1'b1, IO_WD,     wd_q);
 
 assign req_valid = ioreq_q & ~dbe_q;
-assign leds_select = (addr_q == 0) & req_valid;
+assign leds_select   = (addr_q[7:4] == 4'd0);
 
-assign IO.LEDS_WE = leds_select & iowe_q;
-assign IO.LEDS_WD = wd_q[7:0];
+assign IO.LEDS_WE = leds_select & iowe_q & req_valid;
+assign IO.LEDS_WD = wd_q;
+assign IO.LEDS_A  = addr_q[3:0];
 
+mux8  #(32) read_mux( addr_q[6:4],
+                     IO.LEDS_RD,   // 0 
+                     32'd0,        // 1
+                     32'd0,        // 2
+                     32'd0,        // 3
+                     32'd0,        // 4
+                     32'd0,        // 5
+                     32'd0,        // 6
+                     32'd0,        // 7
+                     IO_RD );
+
+    
 endmodule

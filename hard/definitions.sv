@@ -16,8 +16,8 @@ typedef struct packed {
 
   logic        ALUORMEM_WR;     //1/ write regfile from alu(0) or from memory(1)
   
-  logic        MULTIPLY;        //1/ do multiplication and write hi&lo
-  logic        MADD;            //1/ do multiply and add operation
+  logic        WRITE_HILO;      //1/ write hi&lo
+  logic  [2:0] HILO_OP;         //3/ hi&lo op: op[2]=sel mthi/lo; op[1:0]: 0=mul, 1=mad, 2=mt, 3=div
 
   logic  [1:0] REG_DST;         //2/ write destination in regfile (0 - rt, 1 - rd, 1X - 31)
 

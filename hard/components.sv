@@ -22,14 +22,31 @@ always_ff @(posedge CLK) Q <= D;
 endmodule
 //=============================================================//
 module rsd (  input        CLK,
-              input        SET,
               input        RESET,
+              input        SET,
               output logic Q );
 
 always_ff@(posedge CLK)
   if      (RESET) Q <= 1'b0;
   else if (SET)   Q <= 1'b1;
   else            Q <= Q;
+
+endmodule
+//=============================================================//
+module autoreset #(parameter SIZE = 8) (input  CLK,
+                                        input  EXT_RESET,
+                                        output OUT );
+
+logic [SIZE-1:0] cnt = 0;
+logic            done;
+
+assign done = (cnt == '1); //'
+
+always_ff@(posedge CLK)
+  if(EXT_RESET)   cnt <= '0; //'
+  else if (!done) cnt <= cnt + 1'b1;
+
+assign OUT = !done;
 
 endmodule
 //=============================================================//
@@ -263,29 +280,24 @@ assign NEG = v[1] & (~v[0]);
                
 endmodule
 //===============================================//
-module hystheresis (  input  CLK,
-                      input  RESET,
-                      input  IN,
-                      output OUT );
+module hystheresis #( parameter L = 4)
+                    ( input        CLK,
+                      input        EN,
+                      input        IN,
+                      output logic OUT );
 
-reg [3:0] sr;
-reg       val;
+logic [L-1:0] sreg;
+logic         val, go_up, go_down;
 
-always_ff @(posedge CLK)
-  if(RESET)
-    begin
-    sr <= 4'd0;
-    val <= 1'b0;
-    end
-  else
-    begin
-    sr <= {sr[2:0], IN};
-    if     (sr == '1)       val <= 1'b1;
-    else if(sr == '0)       val <= 1'b0;
-    else                    val <= val;
-    end
+assign go_up    = (sreg == '1); //'
+assign go_down  = (sreg == '0); //'
 
-assign OUT = val;
+always_ff@(posedge CLK)
+  if(go_down)    OUT <= 1'b0;
+  else if(go_up) OUT <= 1'b1;
+
+always_ff@(posedge CLK)
+  if(EN) sreg <= {sreg[L-2:0], IN};
           
 endmodule
 //===============================================//
@@ -365,6 +377,93 @@ module negate #( parameter W = 32 )
 assign OUT = EN ? (~IN + 1'b1) : IN;
 
 endmodule
-//===============================================//
 
 
+//=========================================================================//
+module sync_edetect (  input  CLK,
+                       input  IN,
+                       output OUT,
+                       output EDGE,
+                       output NEDGE );
+ 
+logic [2:0] v;
+
+always_ff @(posedge CLK)
+  v <= {v[1:0], IN};
+
+assign OUT   = v[1];
+assign EDGE  = v[2] ^  v[1];
+assign NEDGE = v[2] & ~v[1];
+               
+endmodule
+//=========================================================================//
+module counter_ll #(parameter SIZE = 8) (  input             CLK,
+                                           input             RESET,
+                                           input             EN,
+                                           output [SIZE-1:0] OUT );
+
+// Low latency version
+// Outputs incremented value at the same clock with EN
+
+logic [SIZE-1:0] cnt, cnt_plus_one;
+                                   
+assign cnt_plus_one = cnt + 1'b1;
+
+always_ff@ (posedge CLK)
+  if(RESET)   cnt <= '0; //'
+  else if(EN) cnt <= cnt_plus_one;
+    
+assign OUT = EN ? cnt_plus_one : cnt;
+                                        
+endmodule
+//=========================================================================//
+module shift_out_reg_right #( parameter     D = 8)
+                            ( input         CLK,
+                              input         UPDATE,
+                              input         SHIFT,
+                              input [D-1:0] DATA,
+                              output        OUT );
+
+logic [D-1:0] sreg;
+
+always_ff@(posedge CLK)
+  if     (UPDATE) sreg <= DATA;
+  else if(SHIFT)  sreg <= {1'b0, sreg[D-1:1]};
+
+assign OUT = sreg[0];
+
+endmodule
+//=========================================================================//
+module shift_in_reg_right #(parameter SIZE = 8) ( input             CLK,
+                                                  input             RESET,
+                                                  input             SHIFT,
+                                                  input             IN,
+                                                  output [SIZE-1:0] OUT );
+
+logic [SIZE-1:0] sreg;
+
+always_ff @(posedge CLK)
+   if     (RESET) sreg <= '0; //'
+   else if(SHIFT) sreg <= {IN, sreg[SIZE-1:1]};
+
+assign OUT = sreg;
+
+endmodule
+//=========================================================================//
+/*module shift_out_reg_left  #( parameter     D = 8)
+                            ( input         CLK,
+                              input         UPDATE,
+                              input         SHIFT,
+                              input [D-1:0] DATA,
+                              output        OUT );
+
+logic [D-1:0] sreg;
+
+always_ff@(posedge CLK)
+  if     (UPDATE) sreg <= DATA;
+  else if(SHIFT)  sreg <= {sreg[D-2:0], 1'b0};
+
+assign OUT = sreg[D-1];
+
+endmodule*/
+//=========================================================================//

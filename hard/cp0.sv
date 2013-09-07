@@ -7,6 +7,9 @@ module coprocessor0 #( parameter     RAM_DEPTH = 14)
  
                        //cp0 <--> Exception unit interface
                        if_except.cp0 EXC,
+
+                       //cp0 <--> Peripherial interrupts
+                       if_io.cp0     IO,
  
                        //cp0  --> JTAG unit interface
                        if_debug.cp0  DEBUG );
@@ -18,18 +21,20 @@ logic [31:0] select, index_q, entry_lo1_q, context_q,
 logic [7:0]  int_mask;
 logic [4:0]  cause_q;
 logic [3:0]  random_q, wired_q;
-logic        exc_level, counter_int, int_enable, bd;
+logic        exc_level, int_counter, int_enable, bd;
 
 // Exception_Level register
-   rsd exl_rsd( CLK, EXC.E_ENTER, EXC.ERET, exc_level );
+   rsd exl_rsd( CLK, EXC.ERET, EXC.E_ENTER, exc_level );
 
 // Counter interrupt register
 // Set when count == compare, reset with a write to Compare
-   rsd cnt_int( CLK, (count_q == compare_q), (CP0.WE & select[11]), counter_int);
+   rsd cnt_int( CLK, (CP0.WE & select[11]), (count_q == compare_q), int_counter);
 
 // Counter interrupt
 // Mind the last part: IEN_WB. It is needed to block interrupts at pipeline bubbles
-   assign EXC.INT_COUNTER = counter_int & int_mask[7] & int_enable & ~exc_level & CP0.IEN_WB;
+   assign EXC.INTERRUPT = ( int_enable & ~exc_level & CP0.IEN_WB ) &
+                          ( (int_counter & int_mask[7]) |
+                            (IO.INT_BTN  & int_mask[0]) );
 
 // Interrupt mask & master enable
    ffd #(9) imask(CLK, RESET, CP0.WE & select[12], {CP0.WD[15:8], CP0.WD[0]}, {int_mask, int_enable});
@@ -159,7 +164,7 @@ mux32 #(32) omux (                  CP0.IDX,
                                     32'h00000000,   // r10_entry_hi  
                                     32'h00000000,   // r11_compare   
     {16'b0, int_mask, 6'b0, exc_level, int_enable}, // r12_status    
-     {bd, 15'd0, counter_int, 8'b0, cause_q, 2'b0}, // r13_cause     
+    {bd, 15'd0, int_counter, 6'd0, IO.INT_BTN, 1'b0, cause_q, 2'b0}, // r13_cause     
                                     epc_q,          // r14_epc       
                                     32'hDEADBEEF,   // r15_priid     
                                 2**(RAM_DEPTH+2),   // r16_config // memory size in bytes     
