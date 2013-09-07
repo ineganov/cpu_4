@@ -14,14 +14,27 @@ add wave -noupdate -format Literal -radix hexadecimal /testbench/the_cpu/the_dat
 add wave -noupdate -format Literal -radix hexadecimal /testbench/the_cpu/the_datapath/pc_m
 add wave -noupdate -format Literal -radix hexadecimal /testbench/the_cpu/the_datapath/pc_w
 add wave -noupdate -divider <NULL>
-add wave -noupdate -format Logic /testbench/the_cpu/if_hazard/STALL_FD
-add wave -noupdate -format Logic /testbench/the_cpu/if_hazard/STALL_EM
-add wave -noupdate -format Logic /testbench/the_cpu/the_datapath/muldiv_unit/MUL
+add wave -noupdate -format Logic /testbench/the_cpu/if_hazard/STALL_FDE
+add wave -noupdate -format Logic /testbench/the_cpu/if_hazard/STALL_M
+add wave -noupdate -format Logic /testbench/the_cpu/if_hazard/RESET_M
+add wave -noupdate -format Logic /testbench/the_cpu/if_hazard/RESET_W
+add wave -noupdate -divider <NULL>
 add wave -noupdate -format Logic /testbench/the_cpu/the_datapath/mdiv_busy_m
 add wave -noupdate -format Literal -radix hexadecimal /testbench/the_cpu/the_datapath/muldiv_unit/HI
 add wave -noupdate -format Literal -radix hexadecimal /testbench/the_cpu/the_datapath/muldiv_unit/LO
+add wave -noupdate -divider <NULL>
+add wave -noupdate -format Literal /testbench/the_cpu/the_controller/I.FCODE
+add wave -noupdate -format Literal /testbench/the_cpu/the_controller/I.OPCODE
+add wave -noupdate -format Literal -radix hexadecimal /testbench/the_cpu/the_datapath/inst_stll_f
+add wave -noupdate -format Literal -radix hexadecimal /testbench/the_cpu/the_datapath/inst_subs_f
+add wave -noupdate -format Literal -radix hexadecimal /testbench/the_cpu/the_datapath/inst_f
+add wave -noupdate -format Literal -radix hexadecimal /testbench/the_cpu/the_datapath/inst_d
+add wave -noupdate -format Logic /testbench/the_cpu/the_datapath/enable_inst_f
+add wave -noupdate -format Logic /testbench/the_cpu/the_datapath/ien_f
+add wave -noupdate -format Logic /testbench/the_cpu/the_datapath/br_take_e
+add wave -noupdate -format Literal /testbench/the_cpu/the_datapath/next_pc_select
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {510000 ps} 0}
+WaveRestoreCursors {{Cursor 1} {450000 ps} 0}
 configure wave -namecolwidth 150
 configure wave -valuecolwidth 100
 configure wave -justifyvalue left
@@ -36,4 +49,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits us
 update
-WaveRestoreZoom {372710 ps} {628710 ps}
+WaveRestoreZoom {15200 ps} {2063200 ps}

@@ -22,12 +22,12 @@ _start:
    nop
 
 main:
-   li $a0, 1024
-   li $a1, 10
-   divu  $a0, $a1
-   mflo  $v0
-   addiu $v0, 1
-   mfhi  $v1
+   li $a0, 1025
+   li $a1, 64
+   div  $a0, $a1
+#   mflo  $a0
+   addiu $a0, 1
+   mfhi  $a1
 
 
 

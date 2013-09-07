@@ -20,22 +20,22 @@ assign s_mad_q = s_mult_q + hilo_q;
 
 ffd #(  3)    op_reg(CLK, RESET, EN, OP, op_q);
 
-ffd #( 32) mt_reg   ( CLK, RESET, EN,   A,                  a_q      );
-ffd #( 64) mul_reg  ( CLK, RESET, EN,   s_mult,             s_mult_q );
-ffd #(  1) busym_reg( CLK, RESET, 1'b1, EN & (OP != 2'b11), busy_mul );
+ffd #( 32) mt_reg   ( CLK, RESET, EN,   A,                       a_q      );
+ffd #( 64) mul_reg  ( CLK, RESET, EN,   s_mult,                  s_mult_q );
+ffd #(  1) busym_reg( CLK, RESET, 1'b1, EN & (OP[1:0] != 2'b11), busy_mul );
 
 // mthi / mtlo select
 assign mt_hilo = op_q[2] ? {a_q, hilo_q[31:0]} : {hilo_q[63:32], a_q};
 
-mc_div #(32) mc_div ( .CLK      ( CLK               ),
-                      .RESET    ( RESET             ),
-                      .GO       ( EN & (OP == 2'b11)),
-                      .BUSY     ( busy_div          ),
-                      .W_RESULT ( div_wr            ),
-                      .A        ( A                 ),
-                      .B        ( B                 ),
-                      .QUOT     ( quot              ),
-                      .REM      ( rem               ) );
+mc_div #(32) mc_div ( .CLK      ( CLK                    ),
+                      .RESET    ( RESET                  ),
+                      .GO       ( EN & (OP[1:0] == 2'b11)),
+                      .BUSY     ( busy_div               ),
+                      .W_RESULT ( div_wr                 ),
+                      .A        ( A                      ),
+                      .B        ( B                      ),
+                      .QUOT     ( quot                   ),
+                      .REM      ( rem                    ) );
 
 mux4 #(64) hilo_wr_mux ( .S  ( op_q[1:0]   ),
                          .D0 ( s_mult_q    ),
