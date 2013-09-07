@@ -69,10 +69,10 @@ logic        e_OV_w, e_SYSCALL_w, e_BREAK_w, e_RI_w, e_CpU_w, e_IBE_w, e_DBE_w;
 //------------------------FETCH STAGE----------------------------------------//
 assign pc_plus_4_f = pc_f + 32'd4;
 
-wire [1:0] next_pc_select =  HZRD.STALL_FD ? 2'b11 :
-                             EXC.E_USE_VEC ? 2'b10 : 
-                             br_take_e     ? 2'b01 :
-                                             2'b00 ;
+wire [1:0] next_pc_select =  EXC.E_USE_VEC  ? 2'b10 : 
+                             HZRD.STALL_FDE ? 2'b11 :
+                             br_take_e      ? 2'b01 :
+                                              2'b00 ;
 
 mux4  pc_src_mux( next_pc_select,
                   pc_plus_4_f,     // 00: pc = pc + 4
@@ -90,7 +90,7 @@ assign MEM.iADDR = next_pc[31:2];
 
 assign ien_f = ~br_take_e;
 
-mux2 stll_mux(HZRD.STALL_FD, MEM.iDATA, inst_d, inst_stll_f);
+mux2 stll_mux(HZRD.STALL_FDE, MEM.iDATA, inst_d, inst_stll_f);
 mux2 subs_mux(DEBUG.INST_SUBST, inst_stll_f, DEBUG.iDATA, inst_subs_f);
 mux2 null_mux(enable_inst_f, 32'h00000000, inst_subs_f, inst_f );
 
@@ -99,7 +99,7 @@ assign enable_inst_f = DEBUG.INST_SUBST ? DEBUG.RUN : (ien_f & ~MEM.IBE);
 assign rs_f = inst_f[25:21];
 assign rt_f = inst_f[20:16];
 
-ffd #(66) pipe_reg_D(CLK, EXC.RESET, ~HZRD.STALL_FD, 
+ffd #(66) pipe_reg_D(CLK, EXC.RESET, ~HZRD.STALL_FDE, 
                               { ien_f,        // 1/
                                 inst_f,       //32/
                                 MEM.IBE,      // 1/
@@ -117,9 +117,6 @@ assign INST_O.OPCODE = inst_d[31:26];
 assign INST_O.FCODE  = inst_d[5:0];
 assign INST_O.RS     = inst_d[25:21]; 
 assign INST_O.RT     = inst_d[20:16];
-
-assign HZRD.RS_D = inst_d[25:21]; //rs_d;
-assign HZRD.RT_D = inst_d[20:16]; //rt_d;
 
 assign RI = CI.NOT_IMPLTD;
 assign CP_UNUSBL = (CI.PRIVILEGED & ~CP0.KERNEL_MODE);
@@ -144,7 +141,7 @@ assign write_cp0_d = CI.WRITE_CP0 & ~CP_UNUSBL;
 assign pc_plus_4_d = pc_d + 3'd4;
 
 
-ffd #(251) pipe_reg_E(CLK, EXC.RESET | HZRD.RESET_E, ~HZRD.STALL_EM,
+ffd #(251) pipe_reg_E(CLK, EXC.RESET, ~HZRD.STALL_FDE,
                   {  ien_d,             // 1/ instruction enable
                      write_cp0_d,       // 1/ write coprocessor0
                      CI.WRITE_REG,      // 1/ write to register file
@@ -211,9 +208,6 @@ ffd #(251) pipe_reg_E(CLK, EXC.RESET | HZRD.RESET_E, ~HZRD.STALL_EM,
 //-----------IO BLOCK-----------//
 assign HZRD.RS_E = rs_e;
 assign HZRD.RT_E = rt_e;
-assign HZRD.REGDST_E    = reg_dst_addr_e;
-assign HZRD.WRITEREG_E  = write_reg_e;
-assign HZRD.ALUORMEM_E  = aluormem_e;
 
 assign MEM.WE    = write_mem_e;
 assign MEM.RE    = aluormem_e;
@@ -294,7 +288,7 @@ store_reorder st_reorder_unit( .LO_ADDR ( aluout_e[1:0] ),
                                .BYTE_EN ( dmem_be_e     ),
                                .DATA_OUT( dmem_wd_e     ));
 
-ffd #(128) pipe_reg_M ( CLK, EXC.RESET, ~HZRD.STALL_EM,
+ffd #(128) pipe_reg_M ( CLK, EXC.RESET | HZRD.RESET_M, ~HZRD.STALL_M,
                   {  ien_e,             // 1/ instruction enable
                      br_inst_e,         // 1/ branch instruction
                      write_reg_e,       // 1/ write to register file

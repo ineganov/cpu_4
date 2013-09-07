@@ -44,15 +44,8 @@ endinterface
 //===========================================================================//
 interface if_hazard;
 
-
-  logic [4:0] RS_D;
-  logic [4:0] RT_D;
-
   logic [4:0] RS_E;
   logic [4:0] RT_E;
-  logic [4:0] REGDST_E;
-  logic       WRITEREG_E;
-  logic       ALUORMEM_E;
 
   logic [4:0] REGDST_M;
   logic [1:0] MFCOP_SEL_M;
@@ -63,21 +56,22 @@ interface if_hazard;
   logic [4:0] REGDST_W;
   logic       WRITEREG_W; 
 
-  logic       STALL_FD, STALL_EM, RESET_E, RESET_W;
+  logic       STALL_FDE, STALL_M;
+  logic       RESET_M, RESET_W;
   logic [1:0] ALU_FWD_A;
   logic [1:0] ALU_FWD_B;
 
 
-modport dpath ( input  STALL_FD, STALL_EM, RESET_E, RESET_W, ALU_FWD_A, ALU_FWD_B,
-                output RS_D, RT_D, RS_E, RT_E, REGDST_E, MFCOP_SEL_M,
-                       WRITEREG_E, ALUORMEM_E, REGDST_M, ALUORMEM_M,
-                       WRITEREG_M, REGDST_W, WRITEREG_W, MDIV_BUSY_M );
+modport dpath ( input  STALL_FDE, STALL_M, RESET_M, RESET_W, ALU_FWD_A, ALU_FWD_B,
+               output  RS_E, RT_E, 
+                       REGDST_M, MFCOP_SEL_M, ALUORMEM_M, WRITEREG_M, MDIV_BUSY_M,
+                       REGDST_W, WRITEREG_W );
 
 
-modport hzrd ( output  STALL_FD, STALL_EM, RESET_E, RESET_W, ALU_FWD_A, ALU_FWD_B,
-                input  RS_D, RT_D, RS_E, RT_E, REGDST_E, MFCOP_SEL_M,
-                       WRITEREG_E, ALUORMEM_E, REGDST_M, ALUORMEM_M,
-                       WRITEREG_M, REGDST_W, WRITEREG_W, MDIV_BUSY_M);
+modport hzrd ( output  STALL_FDE, STALL_M, RESET_M, RESET_W, ALU_FWD_A, ALU_FWD_B,
+                input  RS_E, RT_E, 
+                       REGDST_M, MFCOP_SEL_M, ALUORMEM_M, WRITEREG_M, MDIV_BUSY_M,
+                       REGDST_W, WRITEREG_W );
 
 endinterface
 //===========================================================================//

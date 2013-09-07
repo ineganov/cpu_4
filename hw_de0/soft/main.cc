@@ -21,16 +21,17 @@ const char l_tt[] = {0x01, 0x01, 0x7F, 0x01, 0x01};
 const char l_ii[] = {0x7F, 0x48, 0x48, 0x48, 0x30};
 const char l_ee[] = {0x7F, 0x49, 0x49, 0x49, 0x41};
 
-const char digits[] = { 0x3E, 0x41, 0x41, 0x41, 0x3E, 0x00, 0x00, 0x00,     // 0
-                        0x00, 0x00, 0x02, 0x7F, 0x00, 0x00, 0x00, 0x00,     // 1
-                        0x31, 0x49, 0x49, 0x49, 0x46, 0x00, 0x00, 0x00,     // 2
-                        0x49, 0x49, 0x49, 0x49, 0x3E, 0x00, 0x00, 0x00,     // 3
-                        0x0F, 0x08, 0x08, 0x08, 0x7F, 0x00, 0x00, 0x00,     // 4
-                        0x46, 0x49, 0x49, 0x49, 0x31, 0x00, 0x00, 0x00,     // 5
-                        0x3E, 0x49, 0x49, 0x49, 0x30, 0x00, 0x00, 0x00,     // 6
-                        0x01, 0x41, 0x21, 0x11, 0x0F, 0x00, 0x00, 0x00,     // 7
-                        0x36, 0x49, 0x49, 0x49, 0x36, 0x00, 0x00, 0x00,     // 8
-                        0x06, 0x49, 0x49, 0x49, 0x3E, 0x00, 0x00, 0x00  };  // 9
+const char digits[] = { 0x3E, 0x51, 0x49, 0x45, 0x3E,  0,0,0,
+                        0x00, 0x42, 0x7F, 0x40, 0x00,  0,0,0,
+                        0x42, 0x61, 0x51, 0x49, 0x46,  0,0,0,
+                        0x21, 0x41, 0x45, 0x4B, 0x31,  0,0,0,
+                        0x18, 0x14, 0x12, 0x7F, 0x10,  0,0,0,
+                        0x27, 0x45, 0x45, 0x45, 0x39,  0,0,0,
+                        0x3C, 0x4A, 0x49, 0x49, 0x30,  0,0,0,
+                        0x01, 0x71, 0x09, 0x05, 0x03,  0,0,0,
+                        0x36, 0x49, 0x49, 0x49, 0x36,  0,0,0,
+                        0x06, 0x49, 0x49, 0x29, 0x1E,  0,0,0  };
+
 
 //---------------------------------------------------------------------------------//
 void interrupt(int epc, int cause, int * state)
@@ -88,8 +89,7 @@ void hp_init()
 
    *HP_CTRL = HP_RS; wait();
    *HP_CTRL = HP_RS | HP_CE;
-   *HP_SREG = 0x6C;
-//  *HP_SREG = 0x7F;
+   *HP_SREG = 0x7F;
    while(*HP_SREG) {}
    *HP_CTRL = 0;
    return;  }
@@ -103,51 +103,50 @@ void hp_letter(const char * l)
    usleep(1);
    return;  }
 //---------------------------------------------------------------------------------//
-void hp_int(unsigned int a)
-{  /*int dd[4];
+void print_dec(unsigned int a, unsigned int num_symbols = 4)
+{  char dd[20];
+   if(num_symbols > 19) num_symbols = 19;
 
+
+   for(int i = num_symbols - 1; i >= 0; --i)
+   {  dd[i] = (a % 10) + 0x30; a /= 10;  }
+
+   dd[num_symbols] = 0;
+
+   print_str(dd);
+   return; }
+//---------------------------------------------------------------------------------//
+void hp_int(int a)
+{  char dd[4];
+
+   for(int i = 3; i >= 0; --i)
+   {  dd[i] = (a % 10); a /= 10;  }
+
+   *HP_CTRL = HP_CE;
    for(int i = 0; i < 4; ++i)
-   {   dd[i] = a % 10; a /= 10; }
-
-   for(int i = 0; i < 4; ++i)
-      hp_letter(&digits[8*dd[3 - i]]);
+   {  for(int j = 0; j < 5; ++j)
+      {  *HP_SREG = digits[8*dd[i]+j];
+         while(*HP_SREG) {} } }
+   *HP_CTRL = 0;
    
-   */
-   int z = a % 10; a /= 10;
-   int y = a % 10;
-
-   hp_letter(&digits[8*y]);
-   hp_letter(&digits[8*z]);
-   
-
-   return;  }
+   return; }
 //---------------------------------------------------------------------------------//
 int main()
 {  *LEDS = 0x00;
+   print_str("Hello.\n");
+   print_dec(1234, 8);
 
    hp_init();
   
-   hp_int(1234);
+   for(int i = 0; i < 10000; ++i) 
+   {  hp_int(i);
+      usleep(50000); }
 
-   for(int i = 0; i < 4; ++i)
-   {  usleep(7000000);
-      hp_letter(l_e); }
+   usleep(1000000);
 
-
-   usleep(700000);
-   hp_letter(l_ss);
-   usleep(700000);
-   hp_letter(l_ch);
-   usleep(700000);
-   hp_letter(l_aa);
-   usleep(700000);
-   hp_letter(l_ss);
-   usleep(700000);
-   hp_letter(l_tt);
-   usleep(700000);
-   hp_letter(l_ii);
-   usleep(700000);
-   hp_letter(l_ee);
+   for(int i = 0; i < 10; ++i)
+   {  usleep(700000);
+      hp_letter(&digits[8*i]); }
 
 
    while(1) {};
