@@ -1,6 +1,9 @@
 module buffered_rx #(  parameter D = 5, T = 40)
                     (  input         CLK,
                        input         RESET,
+                       input  [15:0] BIT_TIME,
+                       input         PARITY_EN,
+                       input         PARITY_ODD,
                        input         RE,
                        input         WE,
                        input         A,
@@ -22,14 +25,17 @@ simple_fifo #(D, 8) simple_fifo( .CLK       ( CLK             ),
                                  .FILL      ( fill            ),
                                  .OVFLOW    ( ovflow          ) );
 
-uart_rx  #(T) uart_rx( .CLK        ( CLK     ),
-                       .RESET      ( RESET   ),
-                       .PARITY_EN  ( 1'b1    ),
-                       .PARITY_ODD ( 1'b1    ),                
-                       .DATA       ( rx_data ),
-                       .EN         ( rx_en   ),
-                       .PARITY_ERR ( rx_err  ),
-                       .RX         ( UART_RX ) );
+
+uart_rx uart_rx ( .CLK        ( CLK        ),
+                  .RESET      ( RESET      ),
+                  .BIT_TIME   ( BIT_TIME   ),
+                  .PARITY_EN  ( PARITY_EN  ),
+                  .PARITY_ODD ( PARITY_ODD ),                
+                  .DATA       ( rx_data    ),
+                  .EN         ( rx_en      ),
+                  .PARITY_ERR ( rx_err     ),
+                  .IDLE       (            ),
+                  .RX         ( UART_RX    ) );
 
 rsd ovflow_rsd(CLK, RESET | (WE & A), ovflow,  ov_q);
 rsd  error_rsd(CLK, RESET | (WE & A), rx_err, err_q);

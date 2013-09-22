@@ -21,3 +21,42 @@
                       |  |  |                  |  |  |
                       | 2| 1|                  |39|40|
                        ^^ ^^   USB SIDE         ^^ ^^
+
+GPIO_1:
+UART_RX: P14
+UART_TX: M14
+
+
+
+
+
+FTDI:
+UART_RX: M16
+UART_TX: B16
+
+
+            GPIO 1
+             __ __
+            | 1| 2|-HP_CLK
+            |  |  |-HP_RESET
+      HP_RS-|  |  |-HP_DIN
+ (E2) IO_02-|  |  |-IO_03 (E3)
+ (E1) IO_01-|  |  |-IO_04 (E4)
+            |5V| G|-GND
+ (R1) IO_05-|  |  |-IO_06 (R2)
+ (R3) IO_07-|  |  |-IO_08 (R4)
+ (R5) IO_09-|  |  |-IO_10 (R6)
+      IO_11-|  |  |-IO_12
+      IO_13-|  |  |-IO_14
+      IO_15-|  |  |-IO_16
+      IO_17-|  |  |-IO_18
+      IO_19-|  |  |-IO_20
+            |3V| G|
+      HP_BL-|  |  |-XB_RTS
+      HP_CE-|  |  |-XB_CTS
+     XB_DTR-|  |  |-XB_RESET
+     XB_DIN-|  |  |-XB_DOUT
+      AUX_2-|39|40|-AUX_1
+
+    ^^ ^^   USB SIDE         ^^ ^^
+

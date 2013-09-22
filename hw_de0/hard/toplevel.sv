@@ -17,7 +17,6 @@ module toplevel( input        CLK,
                  output       HP_RS,
                  output       HP_RESET,
                  output       HP_BLANK,
-                 output       HP_OSCSEL,
                  output       HP_DO,
                  output       HP_CLK );
 
@@ -76,7 +75,6 @@ hp_display  hdspl( .CLK       ( CLK       ),
                    .HP_RS     ( HP_RS     ),
                    .HP_RESET  ( HP_RESET  ),
                    .HP_BLANK  ( HP_BLANK  ),
-                   .HP_OSCSEL ( HP_OSCSEL ),
                    .HP_DO     ( HP_DO     ),
                    .HP_CLK    ( HP_CLK    ) );
 */

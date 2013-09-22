@@ -133,11 +133,19 @@ void hp_int(int a)
 //---------------------------------------------------------------------------------//
 int main()
 {  *LEDS = 0x00;
+   *UART_SPD = 54; //921600
+   *UART_PAR = 1;
+   usleep(50000);
+
    print_str("Hello.\n");
+
+
    print_dec(1234, 8);
 
+
+
    hp_init();
-  
+/*  
    for(int i = 0; i < 10000; ++i) 
    {  hp_int(i);
       usleep(50000); }
@@ -147,8 +155,23 @@ int main()
    for(int i = 0; i < 10; ++i)
    {  usleep(700000);
       hp_letter(&digits[8*i]); }
+*/
 
+   while(1) 
+   {  int gx = *GYRO_X;
+      int gy = *GYRO_Y;
+      int gz = *GYRO_Z;
+      print_str("> ");
 
-   while(1) {};
+      if(gx < 0) {print_str("-"); print_dec(-gx, 6); }
+      else       {print_str("+"); print_dec( gx, 6); }
+      print_str(", ");
+      if(gy < 0) {print_str("-"); print_dec(-gy, 6); }
+      else       {print_str("+"); print_dec( gy, 6); }
+      print_str(", ");
+      if(gz < 0) {print_str("-"); print_dec(-gz, 6); }
+      else       {print_str("+"); print_dec( gz, 6); }
+      print_str("\n");
+      usleep(100000);  };
 
    return 0; }

@@ -1,18 +1,20 @@
-module uart_tx #(parameter BIT_TIME = 40) ( input       CLK,
-                                            input       RESET,
+module uart_tx ( input        CLK,
+                 input        RESET,
                 
-                                            input [7:0] DATA,
-                                            input       EN,
-                                            input       PARITY_EN,
-                                            input       PARITY_ODD,
-                                            output      READY,
+                 input  [7:0] DATA,
+                 input        EN,
+                 output       READY,
+
+                 input [15:0] BIT_TIME,
+                 input        PARITY_EN,
+                 input        PARITY_ODD,
                 
-                                            output      TX );
+                 output       TX );
                 
-logic       ready, par_ovr, fsm_ovr, fsm_val, sr_q, tx_logic,
-            bit_done, byte_done, bit_inc, par_fd_in, par_fd_q;
-logic [8:0] bit_cnt;
-logic [2:0] byte_cnt;
+logic        ready, par_ovr, fsm_ovr, fsm_val, sr_q, tx_logic,
+             bit_done, byte_done, bit_inc, par_fd_in, par_fd_q;
+logic [15:0] bit_cnt;
+logic  [2:0] byte_cnt;
 
 assign bit_done  = (bit_cnt  == BIT_TIME);
 assign byte_done = (byte_cnt == 3'd7);
@@ -20,14 +22,14 @@ assign bit_inc   = bit_done & ~fsm_ovr;
 
 shift_out_reg_right #(8) sr(CLK, EN & ready, bit_inc, DATA, sr_q);
 
-counter #(9)  bit_counter (CLK, ready | bit_done, 1'b1, bit_cnt  );
+counter #(16) bit_counter (CLK, ready | bit_done, 1'b1, bit_cnt  );
 
 counter #(3)  byte_counter(CLK, ready,         bit_inc, byte_cnt );
 
 assign par_fd_in = (EN & ready) ? PARITY_ODD : (par_fd_q ^ sr_q);
 
 ffd #(1) parity_fd(CLK, RESET, (EN & ready) | bit_inc, par_fd_in, par_fd_q);
-ffds #(1) output_fd(CLK, tx_logic, TX );
+ffd #(1) output_fd(CLK, RESET, 1'b1, tx_logic, TX );
 
 uart_tx_fsm fsm( .CLK       ( CLK       ),
                  .RESET     ( RESET     ),

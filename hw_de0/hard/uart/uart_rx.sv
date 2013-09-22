@@ -1,21 +1,24 @@
 //=========================================================================//
-module uart_rx #(parameter BIT_TIME = 40) ( input        CLK,
-                                            input        RESET,
-                                            input        PARITY_EN,
-                                            input        PARITY_ODD,                
+module uart_rx ( input        CLK,
+                 input        RESET,
+                 
+                 input [15:0] BIT_TIME,
+                 input        PARITY_EN,
+                 input        PARITY_ODD,                
 
-                                            output [7:0] DATA,
-                                            output       EN,
-                                            output       PARITY_ERR,
+                 output [7:0] DATA,
+                 output       EN,
+                 output       PARITY_ERR,
+                 output       IDLE,
                 
-                                            input        RX );
+                 input        RX );
 
 logic any_edge, neg_edge, count_en, half_period, full_period,
       byte_done, data_bit, dp_bit, start_bit, cnt_reset, resync,
       par_fd_in, par_fd_q, shift_bit, shift_bit_p, rx_s;
 
-logic [8:0] bit_cnt_q;
-logic [2:0] byte_cnt_q;
+logic [15:0] bit_cnt_q;
+logic  [2:0] byte_cnt_q;
 
 sync_edetect sd(CLK, RX, rx_s, any_edge, neg_edge);
 
@@ -23,11 +26,11 @@ assign resync      = (half_period & start_bit);
 assign shift_bit   = (full_period & data_bit);
 assign shift_bit_p = (full_period & dp_bit);
 
-assign half_period = (bit_cnt_q == BIT_TIME/2);
+assign half_period = (bit_cnt_q == {1'b0, BIT_TIME[15:1]}); //BIT_TIME/2
 assign full_period = (bit_cnt_q == BIT_TIME);
 assign cnt_reset = ~count_en | resync | shift_bit_p;
 
-counter #(9) bit_time_cnt(CLK, cnt_reset, count_en, bit_cnt_q );
+counter #(16) bit_time_cnt(CLK, cnt_reset, count_en, bit_cnt_q );
 
 assign byte_done = (byte_cnt_q == 3'd7);
 counter #(3) byte_cnt(CLK, resync, shift_bit, byte_cnt_q );
@@ -49,7 +52,8 @@ uart_rx_fsm fsm( .CLK         ( CLK         ),
                  .START_BIT   ( start_bit   ),
                  .DATA_BIT    ( data_bit    ),
                  .DP_BIT      ( dp_bit      ),
-                 .DONE        ( EN          ) );
+                 .DONE        ( EN          ),
+                 .READY       ( IDLE        ) );
 
 assign PARITY_ERR = par_fd_q & EN;
 
@@ -67,7 +71,8 @@ module uart_rx_fsm( input  CLK,
                     output START_BIT,
                     output DATA_BIT,
                     output DP_BIT,
-                    output DONE );
+                    output DONE,
+                    output READY );
 //--------------------------------------------------------//
 enum int unsigned { ST_READY      = 0, 
                     ST_START_BIT  = 1, 
@@ -115,6 +120,8 @@ assign DP_BIT    = DATA_BIT | (state == ST_PARITY_BIT);
 assign COUNT_EN  = DP_BIT   | (state == ST_START_BIT);
 
 assign DONE      = (state == ST_DONE);
+
+assign READY     = (state == ST_READY);
 
 endmodule
 //=========================================================================//

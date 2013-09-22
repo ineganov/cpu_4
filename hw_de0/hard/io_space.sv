@@ -32,7 +32,7 @@ assign IO.LEDS_A  = addr_q[3:0];
 assign IO.UART_WE = uart_select & iowe_q & req_valid;
 assign IO.UART_RE = uart_select & iore_q & req_valid;
 assign IO.UART_WD = wd_q;
-assign IO.UART_A  = addr_q[1:0];
+assign IO.UART_A  = addr_q[2:0];
 
 assign IO.I2C_A  = addr_q[3:0];
 

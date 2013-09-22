@@ -1,6 +1,9 @@
 module buffered_tx #(  parameter D = 5, T = 40)
                     (  input         CLK,
                        input         RESET,
+                       input  [15:0] BIT_TIME,
+                       input         PARITY_EN,
+                       input         PARITY_ODD,
                        input         WE,
                        input         A,
                        input  [31:0] WD,
@@ -22,15 +25,15 @@ simple_fifo #(D, 8) simple_fifo( .CLK       ( CLK                ),
                                  .FILL      ( fill               ),
                                  .OVFLOW    ( ovflow             ) );
 
-uart_tx  #(T) uart_tx( .CLK        ( CLK       ),
-                       .RESET      ( RESET     ),
-                       .DATA       ( fifo_word ),
-                       .EN         ( n_empty   ),
-                       .PARITY_EN  ( 1'b1      ),
-                       .PARITY_ODD ( 1'b1      ),
-                       .READY      ( ready     ),
-                       .TX         ( UART_TX   ));
-
+uart_tx uart_tx ( .CLK        ( CLK        ),
+                  .RESET      ( RESET      ),
+                  .DATA       ( fifo_word  ),
+                  .EN         ( n_empty    ),
+                  .READY      ( ready      ),
+                  .BIT_TIME   ( BIT_TIME   ),
+                  .PARITY_EN  ( PARITY_EN  ),
+                  .PARITY_ODD ( PARITY_ODD ),             
+                  .TX         ( UART_TX    ) );
 
 rsd ovflow_rsd(CLK, RESET | fifo_reset, ovflow, ov_q);
 

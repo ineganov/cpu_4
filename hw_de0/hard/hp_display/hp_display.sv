@@ -10,7 +10,6 @@ module hp_display ( input         CLK,
                     output        HP_RS,
                     output        HP_RESET,
                     output        HP_BLANK,
-                    output        HP_OSCSEL,
                     output        HP_DO,
                     output        HP_CLK );
 
@@ -38,7 +37,7 @@ hp_clk_div hp_clk_div( .CLK    ( CLK          ),
                        .HP_CLK ( HP_CLK       ) );
 
 assign HP_RESET  = ~bits_q[4]; // 0 for normal operation
-assign HP_OSCSEL = ~bits_q[3]; // 0 for internal osc
+//assign HP_OSCSEL = ~bits_q[3]; // 0 for internal osc
 assign HP_BLANK  =  bits_q[2]; // 0 for no blank
 assign HP_RS     =  bits_q[1]; // 0 -- Dot reg, 1 -- Control 
 assign HP_CE     = ~bits_q[0]; // 1 to select the chip

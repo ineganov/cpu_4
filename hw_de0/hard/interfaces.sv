@@ -186,7 +186,7 @@ logic        LEDS_WE;
 logic        INT_BTN;
 
 logic [31:0] UART_WD, UART_RD;
-logic  [1:0] UART_A; 
+logic  [2:0] UART_A; 
 logic        UART_WE, UART_RE;
 
 logic  [3:0] I2C_A;
